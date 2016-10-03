@@ -15,37 +15,40 @@ import (
 )
 
 func main() {
+
 	entry := "Eclipse"
 	hash, pages := read(entry)
-	fmt.Printf("\n%s", hash["what"])
+	fmt.Printf("\n%s", hash["what"]) // BIG TITLE wikitect
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
 		nhash, npages := read(page)
-		fmt.Printf("\n%v\n", nhash["what"])
-		for _, j := range npages { // depth = 2
+		fmt.Printf("\nnhash:%v\n", nhash["what"]) // LITTLE TITLE
+		for _, j := range npages {                // depth = 2
 			npage := nhash[strconv.Itoa(j)]
 			nnhash, _ := read(npage)
-			fmt.Printf("\n%s", nnhash["what"])
-			fmt.Printf("[%s]\n", mungSpaces(npage))
+			fmt.Printf("\nnnhash:%s", nnhash["what"]) // LINK HREF
+			fmt.Printf("[%s]\n", mungSpaces(npage))   // ACTUAL
 
 		}
 	}
-	fmt.Printf("\n%s", hash["why"])
+	fmt.Printf("\n%s\n", hash["why"])
 
-	fmt.Print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 
-	//	t, err := template.New("webpage").Parse(templ())
-	t, err := template.New("webpage").Parse(`{{range $index, $element := .}}<{{$index}}>|{{$element}}|{{end}}`)
+	s := []map[string]string{{"Transfer": "Transfer"}, {"Expression": "Expression"}, {"Knowhow": "Knowhow"}}
+
+	data := struct {
+		SectionTitle string
+		SectionLink  string
+		Items        []map[string]string
+	}{
+		SectionTitle: "Problem Solving Activity",
+		SectionLink:  "Activity",
+		Items:        s,
+	}
+
+	t, err := template.New("webpage").Parse(templ())
 	check(err)
-
-	//	data := struct {
-	//Entry string
-	//}{
-	//Entry: entry,
-	//}
-
-	data := map[string]string{"Mechanism": "Computer Interaction Mechanisms",
-		"Browsing": "Browsing Web Sites", "Collaboration": "Collaborating Online"}
 
 	err = t.Execute(os.Stdout, data)
 	check(err)
@@ -98,6 +101,40 @@ func read(f string) (map[string]string, []int) {
 }
 
 func templ() string {
+	return `
+<html>
+    <head>
+    </head>
+    <body>
+        <center><br>
+            <br>
+            <a href="?file=Eclipse&amp;depth=2">Wikitect</a>
+            <table cellspacing="5" cellpadding="10">
+
+
+                <tr>
+                    <td bgcolor="#EEEEEE"><a href=
+                    "?file=Eclipse.{{.SectionLink}}&amp;depth=2">{{.SectionTitle}}</a>
+
+			{{ range $i, $e := .Items }}
+			{{ range $k, $v := . }}
+                        <table cellspacing="5" cellpadding="10">
+                            <tr>
+                                <td bgcolor="#CCCCCC"><a href="?file=Eclipse.{{$k}}&amp;depth=2">{{$v}}</a></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+				{{ end }}
+				{{ end }}
+                <tr>
+    </body>
+</html>
+`
+}
+
+func Xtempl() string {
 	return `
 <html>
     <head>
