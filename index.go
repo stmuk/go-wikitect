@@ -116,47 +116,18 @@ func templ() string {
                     <td bgcolor="#EEEEEE"><a href=
                     "?file=Eclipse.{{.SectionLink}}&amp;depth=2">{{.SectionTitle}}</a>
 
-			{{ range $i, $e := .Items }}
-			{{ range $k, $v := . }}
                         <table cellspacing="5" cellpadding="10">
                             <tr>
+								{{ range $i, $e := .Items }}
+								{{ range $k, $v := . }}
                                 <td bgcolor="#CCCCCC"><a href="?file=Eclipse.{{$k}}&amp;depth=2">{{$v}}</a></td>
+								{{ end }}
+								{{ end }}
                             </tr>
                         </table>
                     </td>
                 </tr>
 
-				{{ end }}
-				{{ end }}
-                <tr>
-    </body>
-</html>
-`
-}
-
-func Xtempl() string {
-	return `
-<html>
-    <head>
-    </head>
-    <body>
-        <center><br>
-            <br>
-            <a href="?file=Eclipse&amp;depth=2">Wikitect</a>
-            <table cellspacing="5" cellpadding="10">
-
-                <tr>
-                    <td bgcolor="#EEEEEE"><a href=
-                    "?file=Eclipse.Activity&amp;depth=2">Problem Solving Activity</a>
-                        <table cellspacing="5" cellpadding="10">
-                            <tr>
-                                <td bgcolor="#CCCCCC"><a href="?file=Eclipse.Transfer&amp;depth=2">Transfer</a></td>
-                                <td bgcolor="#CCCCCC"><a href="?file=Eclipse.Expression&amp;depth=2">Expression</a></td>
-                                <td bgcolor="#CCCCCC"><a href="?file=Eclipse.Knowhow&amp;depth=2">Knowhow</a></td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
                 <tr>
     </body>
 </html>
