@@ -14,38 +14,41 @@ import (
 	"strings"
 )
 
+type section struct {
+	SectionTitle string
+	SectionLink  string
+	Items        []map[string]string
+}
+
 func main() {
+
+	var data []section
 
 	entry := "Eclipse"
 	hash, pages := read(entry)
-	fmt.Printf("\n%s", hash["what"]) // BIG TITLE wikitect
+	log.Printf("\n%s", hash["what"]) // BIG TITLE wikitect
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
 		nhash, npages := read(page)
-		fmt.Printf("\nnhash:%v\n", nhash["what"]) // LITTLE TITLE
-		for _, j := range npages {                // depth = 2
+		sectionTitle := nhash["what"]
+		sectionLink := "placeholder" // XXX
+		var items []map[string]string
+		for _, j := range npages { // depth = 2
 			npage := nhash[strconv.Itoa(j)]
 			nnhash, _ := read(npage)
-			fmt.Printf("\nnnhash:%s", nnhash["what"]) // LINK HREF
-			fmt.Printf("[%s]\n", mungSpaces(npage))   // ACTUAL
+			m := make(map[string]string)
+			m[mungSpaces(npage)] = nnhash["what"]
+			items = append(items, m)
 
 		}
+		data = append(data, section{
+			SectionTitle: sectionTitle,
+			SectionLink:  sectionLink,
+			Items:        items,
+		})
 	}
-	fmt.Printf("\n%s\n", hash["why"])
 
-	fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-
-	s := []map[string]string{{"Transfer": "Transfer"}, {"Expression": "Expression"}, {"Knowhow": "Knowhow"}}
-
-	data := struct {
-		SectionTitle string
-		SectionLink  string
-		Items        []map[string]string
-	}{
-		SectionTitle: "Problem Solving Activity",
-		SectionLink:  "Activity",
-		Items:        s,
-	}
+	log.Printf("\n%s\n", hash["why"]) // bottom body of text
 
 	t, err := template.New("webpage").Parse(templ())
 	check(err)
@@ -111,7 +114,7 @@ func templ() string {
             <a href="?file=Eclipse&amp;depth=2">Wikitect</a>
             <table cellspacing="5" cellpadding="10">
 
-
+			{{ range $j, $k := .}}
                 <tr>
                     <td bgcolor="#EEEEEE"><a href=
                     "?file=Eclipse.{{.SectionLink}}&amp;depth=2">{{.SectionTitle}}</a>
@@ -127,6 +130,7 @@ func templ() string {
                         </table>
                     </td>
                 </tr>
+				{{end}}
 
                 <tr>
     </body>
