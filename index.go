@@ -1,5 +1,8 @@
 package main
 
+// TODO self issue
+// TODO depth
+
 import (
 	"bufio"
 	"html/template"
@@ -69,20 +72,21 @@ func web() {
 }
 
 func srv(entrySlice []string, w io.Writer) {
-	debug(entrySlice)
 	var sections []section
 	entry := entrySlice[len(entrySlice)-1]
-	debug(entry)
 	hash, pages := read(0, entry)
+
+	if DEBUG == true {
+		pp.Printf("\nhash=%s\n", hash)
+		pp.Printf("\npages=%s\n", pages)
+	}
 
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
 		nhash, npages := read(i, page)
-		debug("==============")
-		debug(nhash)
-		debug("==============")
 		sectionTitle := nhash["what"]
 		sectionLink := nhash["self"]
+		// depth injection here?
 		var items []map[string]string
 
 		if len(npages) > 0 {
@@ -115,7 +119,7 @@ func srv(entrySlice []string, w io.Writer) {
 		err = t.Execute(w, doc)
 		check(err)
 	} else {
-		debug(doc)
+		pp.Printf("\ndoc=%s\n", doc)
 	}
 }
 
@@ -136,7 +140,8 @@ func read(i int, f string) (map[string]string, []int) {
 	var pages []int
 	hash := make(map[string]string)
 
-	hash["self"] = f
+	// XXX ooops
+	//hash["self"] = f
 
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		hash[""] = f
@@ -164,6 +169,7 @@ func read(i int, f string) (map[string]string, []int) {
 		}
 		sort.Ints(pages)
 	}
+	hash["self"] = f // XXX
 
 	return hash, pages
 }
