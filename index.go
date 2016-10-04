@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -29,13 +30,23 @@ type section struct {
 func main() {
 	cgi.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		srv(w)
+		f, err := os.Create("/tmp/cgi.log")
+		check(err)
+		log.SetOutput(f)
+		entry := r.FormValue("file")
+		log.Print(entry)
+		if entry == "" {
+			entry = "Eclipse"
+		} else {
+			entry = strings.Replace(entry, "Eclipse.", "", -1)
+		}
+		log.Print(entry)
+		srv(entry, w)
 	}))
 }
 
-func srv(w io.Writer) {
+func srv(entry string, w io.Writer) {
 	var sections []section
-	entry := "Eclipse"
 	hash, pages := read(entry)
 
 	for _, i := range pages {
@@ -64,7 +75,6 @@ func srv(w io.Writer) {
 
 	doc := doc{DocTitle: hash["what"], DocFooter: hash["why"]}
 	doc.Sections = sections
-	//pp.Print(doc)
 	err = t.Execute(w, doc)
 	check(err)
 
@@ -83,28 +93,33 @@ func mungSpaces(s string) string {
 func read(f string) (map[string]string, []int) {
 	f = mungSpaces(f)
 	fn := "./pages/" + f + "/current"
-	//fmt.Println("\nopening " + fn)
-	file, err := os.Open(fn)
-	check(err)
-	scanner := bufio.NewScanner(file)
-	numRegex, _ := regexp.Compile(`^\d+$`)
-	hash := make(map[string]string)
+
 	var pages []int
-	for scanner.Scan() {
-		line := scanner.Text()
-		if line == "" {
-			continue
+	hash := make(map[string]string)
+
+	if _, err := os.Stat(fn); os.IsNotExist(err) {
+	} else {
+		fmt.Fprintln(os.Stderr, "\nopening "+fn)
+		file, err := os.Open(fn)
+		check(err)
+		scanner := bufio.NewScanner(file)
+		numRegex, _ := regexp.Compile(`^\d+$`)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" {
+				continue
+			}
+			lineSlice := strings.Split(line, ": ")
+			key := lineSlice[0]
+			val := lineSlice[1]
+			hash[key] = val
+			if numRegex.Match([]byte(key)) {
+				i, _ := strconv.ParseInt(key, 10, 32)
+				pages = append(pages, int(i))
+			}
 		}
-		lineSlice := strings.Split(line, ": ")
-		key := lineSlice[0]
-		val := lineSlice[1]
-		hash[key] = val
-		if numRegex.Match([]byte(key)) {
-			i, _ := strconv.ParseInt(key, 10, 32)
-			pages = append(pages, int(i))
-		}
+		sort.Ints(pages)
 	}
-	sort.Ints(pages)
 	return hash, pages
 }
 
