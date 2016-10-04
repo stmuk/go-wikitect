@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/k0kubun/pp"
 	"html/template"
 	"log"
 	"net/http"
@@ -15,6 +14,12 @@ import (
 	"strings"
 )
 
+type doc struct {
+	DocTitle  string
+	DocFooter string
+	Sections  []section
+}
+
 type section struct {
 	SectionTitle string
 	SectionLink  string
@@ -22,12 +27,10 @@ type section struct {
 }
 
 func main() {
-
-	var data []section
-
+	var sections []section
 	entry := "Eclipse"
 	hash, pages := read(entry)
-	log.Printf("\n%s", hash["what"]) // BIG TITLE wikitect
+
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
 		nhash, npages := read(page)
@@ -42,20 +45,20 @@ func main() {
 			items = append(items, m)
 
 		}
-		data = append(data, section{
+		sections = append(sections, section{
 			SectionTitle: sectionTitle,
 			SectionLink:  sectionLink,
 			Items:        items,
 		})
 	}
 
-	log.Printf("\n%s\n", hash["why"]) // bottom body of text
-
 	t, err := template.New("webpage").Parse(templ())
 	check(err)
 
-	pp.Print(data)
-	err = t.Execute(os.Stdout, data)
+	doc := doc{DocTitle: hash["what"], DocFooter: hash["why"]}
+	doc.Sections = sections
+	//pp.Print(doc)
+	err = t.Execute(os.Stdout, doc)
 	check(err)
 
 	cgi.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -113,10 +116,10 @@ func templ() string {
     <body>
         <center><br>
             <br>
-            <a href="?file=Eclipse&amp;depth=2">Wikitect</a>
+            <a href="?file=Eclipse&amp;depth=2">{{.DocTitle}}</a>
             <table cellspacing="5" cellpadding="10">
 
-			{{ range $j, $k := .}}
+			{{ range $j, $k := .Sections}}
                 <tr>
                     <td bgcolor="#EEEEEE"><a href=
                     "?file=Eclipse.{{.SectionLink}}&amp;depth=2">{{.SectionTitle}}</a>
@@ -133,8 +136,16 @@ func templ() string {
                     </td>
                 </tr>
 				{{end}}
+				</table>
 
-                <tr>
+				<table width="500">
+				  <tr>
+				    <td><font color="gray"> {{.DocFooter}}
+				    </font><font color="gray">Use <a href=
+				"?file=Eclipse&amp;depth=2&amp;edit=on">edit</a> to change this and
+				nearby elements.</font></td>
+				    </tr>
+				</table>
     </body>
 </html>
 `
