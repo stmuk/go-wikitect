@@ -78,8 +78,11 @@ func srv(entrySlice []string, w io.Writer) {
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
 		nhash, npages := read(i, page)
+		debug("==============")
+		debug(nhash)
+		debug("==============")
 		sectionTitle := nhash["what"]
-		sectionLink := "placeholder" // XXX
+		sectionLink := nhash["self"]
 		var items []map[string]string
 
 		if len(npages) > 0 {
@@ -132,6 +135,8 @@ func read(i int, f string) (map[string]string, []int) {
 
 	var pages []int
 	hash := make(map[string]string)
+
+	hash["self"] = f
 
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		hash[""] = f
