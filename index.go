@@ -2,8 +2,8 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cgi"
@@ -27,6 +27,13 @@ type section struct {
 }
 
 func main() {
+	cgi.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		srv(w)
+	}))
+}
+
+func srv(w io.Writer) {
 	var sections []section
 	entry := "Eclipse"
 	hash, pages := read(entry)
@@ -58,16 +65,9 @@ func main() {
 	doc := doc{DocTitle: hash["what"], DocFooter: hash["why"]}
 	doc.Sections = sections
 	//pp.Print(doc)
-	err = t.Execute(os.Stdout, doc)
+	err = t.Execute(w, doc)
 	check(err)
 
-	cgi.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		//		fmt.Fprintf(w, "Hello %s", r.FormValue("name"))
-
-		fmt.Print(read(entry))
-
-	}))
 }
 
 func check(err error) {
