@@ -75,16 +75,7 @@ func srv(entrySlice []string, w io.Writer) {
 
 			}
 		} else {
-
-			revhash := nhash
-			//revhash := make(map[string]string)
-			//for k, v := range nhash {
-			//		revhash[v] = k
-			//		}
-			//		fmt.Fprintf(os.Stderr, "nhash:%+v\n", nhash)
-			//		fmt.Fprintf(os.Stderr, "revhash:%+v\n", revhash)
-
-			items = append(items, revhash)
+			items = append(items, nhash)
 		}
 
 		sections = append(sections, section{
@@ -126,7 +117,6 @@ func read(i int, f string) (map[string]string, []int) {
 
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		hash[""] = f
-		//hash[f] = strconv.Itoa(i)
 	} else {
 		fmt.Fprintln(os.Stderr, "\nopening "+fn)
 		file, err := os.Open(fn)
