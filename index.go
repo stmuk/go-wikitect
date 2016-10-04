@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/k0kubun/pp"
 	"html/template"
 	"log"
 	"net/http"
@@ -53,6 +54,7 @@ func main() {
 	t, err := template.New("webpage").Parse(templ())
 	check(err)
 
+	pp.Print(data)
 	err = t.Execute(os.Stdout, data)
 	check(err)
 
