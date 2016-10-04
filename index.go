@@ -34,35 +34,59 @@ func main() {
 		check(err)
 		log.SetOutput(f)
 		entry := r.FormValue("file")
-		log.Print(entry)
+		depth := r.FormValue("depth")
+		log.Print("depth=" + depth)
 		if entry == "" {
-			entry = "Eclipse"
-		} else {
-			entry = strings.Replace(entry, "Eclipse.", "", -1)
+			entry = "Eclipse.Eclipse"
 		}
-		log.Print(entry)
-		srv(entry, w)
+		entrySlice := strings.Split(entry, ".")
+		srv(entrySlice, w)
 	}))
 }
 
-func srv(entry string, w io.Writer) {
+func Xmain() {
+	entry := "Eclipse"
+	entry = "Eclipse.Transfer"
+	entrySlice := strings.Split(entry, ".")
+	srv(entrySlice, os.Stdout)
+}
+
+func srv(entrySlice []string, w io.Writer) {
+	fmt.Fprintf(os.Stderr, "entrySlice:%+v\n", entrySlice)
 	var sections []section
-	hash, pages := read(entry)
+	entry := entrySlice[len(entrySlice)-1]
+	log.Print("entry=" + entry)
+	hash, pages := read(0, entry)
 
 	for _, i := range pages {
 		page := hash[strconv.Itoa(i)]
-		nhash, npages := read(page)
+		nhash, npages := read(i, page)
 		sectionTitle := nhash["what"]
 		sectionLink := "placeholder" // XXX
 		var items []map[string]string
-		for _, j := range npages { // depth = 2
-			npage := nhash[strconv.Itoa(j)]
-			nnhash, _ := read(npage)
-			m := make(map[string]string)
-			m[mungSpaces(npage)] = nnhash["what"]
-			items = append(items, m)
 
+		if len(npages) > 0 {
+			for _, j := range npages { // depth = 2
+				npage := nhash[strconv.Itoa(j)]
+				nnhash, _ := read(j, npage)
+				m := make(map[string]string)
+				m[mungSpaces(npage)] = nnhash["what"]
+				items = append(items, m)
+
+			}
+		} else {
+
+			revhash := nhash
+			//revhash := make(map[string]string)
+			//for k, v := range nhash {
+			//		revhash[v] = k
+			//		}
+			//		fmt.Fprintf(os.Stderr, "nhash:%+v\n", nhash)
+			//		fmt.Fprintf(os.Stderr, "revhash:%+v\n", revhash)
+
+			items = append(items, revhash)
 		}
+
 		sections = append(sections, section{
 			SectionTitle: sectionTitle,
 			SectionLink:  sectionLink,
@@ -76,6 +100,9 @@ func srv(entry string, w io.Writer) {
 	doc := doc{DocTitle: hash["what"], DocFooter: hash["why"]}
 	doc.Sections = sections
 	err = t.Execute(w, doc)
+
+	fmt.Fprintf(os.Stderr, "doc:%+v\n", doc)
+	//	pp.Print(doc)
 	check(err)
 
 }
@@ -90,7 +117,7 @@ func mungSpaces(s string) string {
 	return strings.Replace(s, " ", "_", -1)
 }
 
-func read(f string) (map[string]string, []int) {
+func read(i int, f string) (map[string]string, []int) {
 	f = mungSpaces(f)
 	fn := "./pages/" + f + "/current"
 
@@ -98,6 +125,8 @@ func read(f string) (map[string]string, []int) {
 	hash := make(map[string]string)
 
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
+		hash[""] = f
+		//hash[f] = strconv.Itoa(i)
 	} else {
 		fmt.Fprintln(os.Stderr, "\nopening "+fn)
 		file, err := os.Open(fn)
@@ -120,6 +149,9 @@ func read(f string) (map[string]string, []int) {
 		}
 		sort.Ints(pages)
 	}
+
+	//pp.Print(hash)
+	//pp.Print(pages)
 	return hash, pages
 }
 
@@ -143,7 +175,7 @@ func templ() string {
                             <tr>
 								{{ range $i, $e := .Items }}
 								{{ range $k, $v := . }}
-                                <td bgcolor="#CCCCCC"><a href="?file=Eclipse.{{$k}}&amp;depth=2">{{$v}}</a></td>
+                                <td bgcolor="#CCCCCC">{{ if ne $k ""}}<a href="?file=Eclipse.Eclipse.{{$k}}&amp;depth=2">{{end}}{{$v}}</a></td>
 								{{ end }}
 								{{ end }}
                             </tr>
