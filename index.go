@@ -40,6 +40,12 @@ func main() {
 	}
 }
 
+func debug(s interface{}) {
+	if DEBUG == true {
+		pp.Print(s)
+	}
+}
+
 func stdout() {
 	entry := "Eclipse"
 	entry = "Eclipse.Eclipse"
@@ -53,9 +59,7 @@ func web() {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		entry := r.FormValue("file")
 		depth := r.FormValue("depth")
-		if DEBUG == true {
-			pp.Print(depth)
-		}
+		debug(depth)
 		if entry == "" {
 			entry = "Eclipse.Eclipse"
 		}
@@ -65,14 +69,10 @@ func web() {
 }
 
 func srv(entrySlice []string, w io.Writer) {
-	if DEBUG == true {
-		pp.Print(entrySlice)
-	}
+	debug(entrySlice)
 	var sections []section
 	entry := entrySlice[len(entrySlice)-1]
-	if DEBUG == true {
-		pp.Print(entry)
-	}
+	debug(entry)
 	hash, pages := read(0, entry)
 
 	for _, i := range pages {
@@ -112,7 +112,7 @@ func srv(entrySlice []string, w io.Writer) {
 		err = t.Execute(w, doc)
 		check(err)
 	} else {
-		pp.Print(doc)
+		debug(doc)
 	}
 }
 
@@ -137,9 +137,7 @@ func read(i int, f string) (map[string]string, []int) {
 		hash[""] = f
 	} else {
 
-		if DEBUG == true {
-			pp.Print(fn)
-		}
+		debug(fn)
 
 		file, err := os.Open(fn)
 		check(err)
