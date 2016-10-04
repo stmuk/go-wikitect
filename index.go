@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -13,7 +12,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/k0kubun/pp"
 )
+
+var DEBUG bool
 
 type doc struct {
 	DocTitle  string
@@ -28,14 +31,31 @@ type section struct {
 }
 
 func main() {
+	if os.Getenv("DEBUG") == "" {
+		DEBUG = false
+		web()
+	} else {
+		DEBUG = true
+		stdout()
+	}
+}
+
+func stdout() {
+	entry := "Eclipse"
+	entry = "Eclipse.Eclipse"
+	//entry = "Eclipse.Transfer"
+	entrySlice := strings.Split(entry, ".")
+	srv(entrySlice, os.Stdout)
+}
+
+func web() {
 	cgi.Serve(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		f, err := os.Create("/tmp/cgi.log")
-		check(err)
-		log.SetOutput(f)
 		entry := r.FormValue("file")
 		depth := r.FormValue("depth")
-		log.Print("depth=" + depth)
+		if DEBUG == true {
+			pp.Print(depth)
+		}
 		if entry == "" {
 			entry = "Eclipse.Eclipse"
 		}
@@ -44,18 +64,15 @@ func main() {
 	}))
 }
 
-func Xmain() {
-	entry := "Eclipse"
-	entry = "Eclipse.Transfer"
-	entrySlice := strings.Split(entry, ".")
-	srv(entrySlice, os.Stdout)
-}
-
 func srv(entrySlice []string, w io.Writer) {
-	fmt.Fprintf(os.Stderr, "entrySlice:%+v\n", entrySlice)
+	if DEBUG == true {
+		pp.Print(entrySlice)
+	}
 	var sections []section
 	entry := entrySlice[len(entrySlice)-1]
-	log.Print("entry=" + entry)
+	if DEBUG == true {
+		pp.Print(entry)
+	}
 	hash, pages := read(0, entry)
 
 	for _, i := range pages {
@@ -90,12 +107,13 @@ func srv(entrySlice []string, w io.Writer) {
 
 	doc := doc{DocTitle: hash["what"], DocFooter: hash["why"]}
 	doc.Sections = sections
-	err = t.Execute(w, doc)
 
-	fmt.Fprintf(os.Stderr, "doc:%+v\n", doc)
-	//	pp.Print(doc)
-	check(err)
-
+	if DEBUG == false {
+		err = t.Execute(w, doc)
+		check(err)
+	} else {
+		pp.Print(doc)
+	}
 }
 
 func check(err error) {
@@ -118,7 +136,11 @@ func read(i int, f string) (map[string]string, []int) {
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		hash[""] = f
 	} else {
-		fmt.Fprintln(os.Stderr, "\nopening "+fn)
+
+		if DEBUG == true {
+			pp.Print(fn)
+		}
+
 		file, err := os.Open(fn)
 		check(err)
 		scanner := bufio.NewScanner(file)
@@ -140,8 +162,6 @@ func read(i int, f string) (map[string]string, []int) {
 		sort.Ints(pages)
 	}
 
-	//pp.Print(hash)
-	//pp.Print(pages)
 	return hash, pages
 }
 
